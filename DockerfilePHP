@@ -1,0 +1,88 @@
+FROM debian:stretch-slim
+
+ARG PHP_VERSION=7.2
+ENV PHP_VERSION=$PHP_VERSION
+
+RUN apt-get update -y && apt-get upgrade -y
+
+RUN apt-get install -y \
+  build-essential \
+  apt-utils \
+  ca-certificates \
+  apt-transport-https \
+  gnupg \
+  wget \
+  curl \
+  libcurl4-openssl-dev \
+  nano \
+  git \
+  zip \
+  iputils-ping \
+  vim \
+  dnsutils \
+  net-tools \
+  htop \
+  zsh \
+  acl
+
+RUN curl -sS https://packages.sury.org/php/apt.gpg | apt-key add -
+RUN echo "deb https://packages.sury.org/php/ stretch main" | tee /etc/apt/sources.list.d/php.list
+
+RUN apt-get update
+
+# Install PHP package system
+# Attention certains packages ne fournissent pas toutes les versions PHP
+RUN echo "**** Installation des packages PHP $PHP_VERSION ****"
+
+RUN apt-get install -y \
+  php${PHP_VERSION}-cli \
+  php${PHP_VERSION}-common \
+  php${PHP_VERSION}-opcache \
+  php${PHP_VERSION}-curl \
+  php${PHP_VERSION}-mbstring \
+  php${PHP_VERSION}-zip \
+  php${PHP_VERSION}-xml \
+  php${PHP_VERSION}-curl \
+  php${PHP_VERSION}-gd \
+  php${PHP_VERSION}-xsl \
+  php${PHP_VERSION}-intl \
+  php${PHP_VERSION}-bz2 \
+  php${PHP_VERSION}-zip \
+  php${PHP_VERSION}-apcu \
+  php${PHP_VERSION}-sqlite \
+  php${PHP_VERSION}-opcache \
+  php${PHP_VERSION}-xml \
+  php${PHP_VERSION}-bcmath \
+  php${PHP_VERSION}-pgsql \
+  php${PHP_VERSION}-soap \
+  php-imagick \
+  php-redis \
+  php-amqp \
+  php-yaml \
+  php-xdebug \
+  libpq-dev \
+  libpng-dev \
+  libjpeg-dev \
+  libpq-dev \
+  libfreetype6-dev \
+  openssl \
+  htmldoc \
+  libmcrypt-dev
+
+RUN echo "**** Installation librairie libpng12 ****"
+## Fix error here /srv/redpill/javascript/front/b2b/node_modules/imagemin-mozjpeg/node_modules/mozjpeg/vendor/cjpeg
+# error while loading shared libraries: libpng12.so.0: cannot open shared object file: No such file or directory
+RUN wget -q -O /tmp/libpng12.deb http://ftp.uk.debian.org/debian/pool/main/libp/libpng/libpng12-0_1.2.50-2+deb8u3_amd64.deb
+RUN dpkg -i /tmp/libpng12.deb
+RUN rm -rf /tmp/libpng12.deb
+
+RUN mkdir /run/php
+
+RUN echo "**** Installation Composer ****"
+RUN php -r "copy('https://getcomposer.org/installer', 'composer-setup.php');"
+RUN php composer-setup.php
+RUN php -r "unlink('composer-setup.php');"
+RUN mv composer.phar /usr/local/bin/composer
+RUN chmod +x /usr/local/bin/composer
+
+WORKDIR /src
